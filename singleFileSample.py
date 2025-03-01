@@ -17,7 +17,6 @@ from pyrubicon.objc.runtime import libobjc, objc_block
 
 from rbedge import pdbr
 
-
 ObjCClass.auto_rename = True
 
 
@@ -126,14 +125,14 @@ class RootNavigationController(UINavigationController):
     print(f'{NSStringFromClass(__class__)}: loadView')
     navigationBarAppearance = UINavigationBarAppearance.new()
     navigationBarAppearance.configureWithDefaultBackground()
-    
+    #navigationBarAppearance.configureWithOpaqueBackground()
+    #navigationBarAppearance.configureWithTransparentBackground()
+
     navigationBar = self.navigationBar
     navigationBar.standardAppearance = navigationBarAppearance
     navigationBar.scrollEdgeAppearance = navigationBarAppearance
     navigationBar.compactAppearance = navigationBarAppearance
     navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
-    
-    #pdbr.state(self.navigationController,1)
 
   @objc_method
   def viewDidLoad(self):
@@ -333,6 +332,5 @@ if __name__ == '__main__':
 
   app = App(main_vc, presentation_style)
   app.present()
-
   print('--- end ---')
 
