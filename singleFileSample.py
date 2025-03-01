@@ -15,6 +15,9 @@ from pyrubicon.objc.eventloop import EventLoopPolicy
 import functools
 from pyrubicon.objc.runtime import libobjc, objc_block
 
+from rbedge import pdbr
+
+
 ObjCClass.auto_rename = True
 
 
@@ -105,6 +108,7 @@ def onMainThread(func):
 # --- UINavigationController
 #############################################################
 UINavigationController = ObjCClass('UINavigationController')
+UINavigationBarAppearance = ObjCClass('UINavigationBarAppearance')
 UIBarButtonItem = ObjCClass('UIBarButtonItem')
 
 
@@ -120,6 +124,16 @@ class RootNavigationController(UINavigationController):
   def loadView(self):
     send_super(__class__, self, 'loadView')
     print(f'{NSStringFromClass(__class__)}: loadView')
+    navigationBarAppearance = UINavigationBarAppearance.new()
+    navigationBarAppearance.configureWithDefaultBackground()
+    
+    navigationBar = self.navigationBar
+    navigationBar.standardAppearance = navigationBarAppearance
+    navigationBar.scrollEdgeAppearance = navigationBarAppearance
+    navigationBar.compactAppearance = navigationBarAppearance
+    navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
+    
+    #pdbr.state(self.navigationController,1)
 
   @objc_method
   def viewDidLoad(self):
