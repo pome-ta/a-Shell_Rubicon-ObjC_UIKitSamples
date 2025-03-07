@@ -34,7 +34,7 @@ def get_order_list():
   return order_list
 
 
-class SfSymbolsViewController(UIViewController):
+class SFSymbolsViewController(UIViewController):
 
   #sfTableView: UITableView = objc_property()
   cell_identifier: str = objc_property()
@@ -61,7 +61,8 @@ class SfSymbolsViewController(UIViewController):
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__)
 
-    self.view.backgroundColor = UIColor.systemDarkBlueColor()
+    #self.view.backgroundColor = UIColor.systemDarkBlueColor()
+    self.view.backgroundColor = UIColor.systemBackgroundColor()
 
     # --- Table
     sfTableView = UITableView.alloc().initWithFrame_style_(
@@ -176,8 +177,8 @@ if __name__ == '__main__':
   from rbedge.app import App
   from rbedge.enumerations import UIModalPresentationStyle
 
-  main_vc = SfSymbolsViewController.new()
-  _title = NSStringFromClass(SfSymbolsViewController)
+  main_vc = SFSymbolsViewController.new()
+  _title = NSStringFromClass(SFSymbolsViewController)
   main_vc.navigationItem.title = _title
 
   presentation_style = UIModalPresentationStyle.fullScreen
