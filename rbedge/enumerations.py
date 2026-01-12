@@ -1,72 +1,71 @@
-from dataclasses import dataclass
+from enum import IntEnum, IntFlag
 
 
 # ref: [UIModalPresentationStyle | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uimodalpresentationstyle)
-class UIModalPresentationStyle:
-  automatic: int = -2
-  none: int = -1
-  fullScreen: int = 0
-  pageSheet: int = 1
-  formSheet: int = 2
-  currentContext: int = 3
-  custom: int = 4
-  overFullScreen: int = 5
-  overCurrentContext: int = 6
-  popover: int = 7
-  blurOverFullScreen: int = 8
+class UIModalPresentationStyle(IntEnum):
+  automatic = -2
+  none = -1
+  fullScreen = 0
+  pageSheet = 1
+  formSheet = 2
+  currentContext = 3
+  custom = 4
+  overFullScreen = 5
+  overCurrentContext = 6
+  popover = 7
+  blurOverFullScreen = 8
 
 
 # ref: [UIRectEdge | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uirectedge?language=objc)
-@dataclass
-class UIRectEdge:
-  none: int = 0
-  top: int = 1 << 0
-  left: int = 1 << 1
-  bottom: int = 1 << 2
-  right: int = 1 << 3
-  all: int = top | left | bottom | right
+class UIRectEdge(IntFlag):
+  none = 0
+  top = 1 << 0
+  left = 1 << 1
+  bottom = 1 << 2
+  right = 1 << 3
+  all = top | left | bottom | right
 
 
 # ref: [UIBarButtonSystemItem | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uibarbuttonsystemitem?language=objc)
-class UIBarButtonSystemItem:
-  done: int = 0
-  cancel: int = 1
-  edit: int = 2
-  add: int = 4
-  flexibleSpace: int = 5
-  fixedSpace: int = 6
-  compose: int = 7
-  reply: int = 8
-  action: int = 9
-  organize: int = 10
-  bookmarks: int = 11
-  search: int = 12
-  refresh: int = 13
-  stop: int = 14
-  trash: int = 16
-  play: int = 17
-  pause: int = 18
-  rewind: int = 19
-  fastForward: int = 20
-  undo: int = 21
-  redo: int = 22
-  pageCurl: int = 23  # Deprecated
-  close: int = 24
+class UIBarButtonSystemItem(IntEnum):
+  done = 0
+  cancel = 1
+  edit = 2
+  add = 4
+  flexibleSpace = 5
+  fixedSpace = 6
+  compose = 7
+  reply = 8
+  action = 9
+  organize = 10
+  bookmarks = 11
+  search = 12
+  refresh = 13
+  stop = 14
+  trash = 16
+  play = 17
+  pause = 18
+  rewind = 19
+  fastForward = 20
+  undo = 21
+  redo = 22
+  pageCurl = 23  # Deprecated
+  close = 24
 
 
 # ref: [UISceneActivationState | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uiscene/activationstate-swift.enum?language=objc)
 class UISceneActivationState:
   # ref: [UISceneDefinitions.rs - source](https://docs.rs/objc2-ui-kit/latest/src/objc2_ui_kit/generated/UISceneDefinitions.rs.html#12)
-  unattached: int = -1
-  foregroundActive: int = 0
-  foregroundInactive: int = 1
-  background: int = 2
+  unattached = -1
+  foregroundActive = 0
+  foregroundInactive = 1
+  background = 2
 
 
 
 # ref: [UITableViewStyle | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uitableviewstyle?language=objc)
 class UITableViewStyle:
   # ref: [UITableView.rs - source](https://docs.rs/objc2-ui-kit/latest/src/objc2_ui_kit/generated/UITableView.rs.html#19)
-  plain: int = 0
-  grouped: int = 1
-  insetGrouped: int = 2
+  plain = 0
+  grouped = 1
+  insetGrouped = 2
