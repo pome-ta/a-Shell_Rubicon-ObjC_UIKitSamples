@@ -46,7 +46,7 @@ class SFSymbolsViewController(UIViewController):
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
-    self.view.backgroundColor = UIColor.systemBackgroundColor
+    self.view.backgroundColor = UIColor.systemBackgroundColor()
 
     # --- Table
     sf_tableView = UITableView.alloc().initWithFrame_style_(
