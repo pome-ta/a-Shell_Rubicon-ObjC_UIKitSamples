@@ -142,12 +142,18 @@ class RootNavigationController(UINavigationController):
     navigationBarAppearance.configureWithDefaultBackground()
     #navigationBarAppearance.configureWithOpaqueBackground()
     #navigationBarAppearance.configureWithTransparentBackground()
+    '''
 
     navigationBar = self.navigationBar
     navigationBar.standardAppearance = navigationBarAppearance
     navigationBar.scrollEdgeAppearance = navigationBarAppearance
     navigationBar.compactAppearance = navigationBarAppearance
     navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
+    '''
+    self.navigationBar.standardAppearance = navigationBarAppearance
+    self.navigationBar.scrollEdgeAppearance = navigationBarAppearance
+    self.navigationBar.compactAppearance = navigationBarAppearance
+    self.navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
 
   @objc_method
   def viewDidLoad(self) -> None:
@@ -241,7 +247,10 @@ class RootNavigationController(UINavigationController):
     animated: bool,
   ) -> None:
     closeButtonItem = UIBarButtonItem.alloc().initWithBarButtonSystemItem(
-      24, target=navigationController, action=SEL('closeButtonTapped:'))
+      24,
+      target=navigationController,
+      action=SEL('closeButtonTapped:'),
+    )
 
     visibleViewController = navigationController.visibleViewController
     navigationItem = visibleViewController.navigationItem
@@ -281,6 +290,7 @@ class MainViewController(UIViewController):
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
+
 
   @objc_method
   def viewWillAppear_(self, animated: bool) -> None:
@@ -355,8 +365,7 @@ class MainViewController(UIViewController):
 # --- app present
 #############################################################
 UIApplication = ObjCClass('UIApplication')
-
-
+'''
 class App:
 
   # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -393,6 +402,74 @@ class App:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     loop.run_forever()
     loop.close()
+'''
+
+
+class App:
+
+  def __init__(
+    self,
+    viewController: UIViewController,
+    modalPresentationStyle=1,
+  ):
+    self.viewController = viewController
+    self.modalPresentationStyle = modalPresentationStyle
+
+    self.set_rootViewController()
+
+  def set_rootViewController(self) -> None:
+    # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    sharedApplication = UIApplication.sharedApplication
+    objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
+
+    windowScene = next(_scene
+                       for _scene in iter(objectEnumerator.nextObject, None)
+                       if _scene.activationState == 0)
+
+    rootViewController = windowScene.keyWindow.rootViewController
+    self.rootViewController = rootViewController
+
+  def present(
+    self,
+    NavigationController=RootNavigationController,
+  ) -> None:
+
+    # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    @onMainThread
+    def present_viewController(
+      viewController: UIViewController,
+      style: int,
+    ) -> None:
+
+      presentViewController = NavigationController.alloc(
+      ).initWithRootViewController_(viewController)
+
+      presentViewController.setModalPresentationStyle_(style)
+
+      self.rootViewController.presentViewController_animated_completion_(
+        presentViewController,
+        True,
+        None,
+      )
+
+    # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    present_viewController(
+      self.viewController,
+      self.modalPresentationStyle,
+    )
+    self.main_loop()
+
+  def main_loop(self) -> None:
+    # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    try:
+      print(f'try')
+      loop.run_forever()
+    except Exception as e:
+      print(f'stop: {e}')
+      loop.stop()
+    finally:
+      print(f'finally')
+      loop.close()
 
 
 if __name__ == '__main__':
