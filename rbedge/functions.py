@@ -1,6 +1,6 @@
 import ctypes
 
-from pyrubicon.objc.api import ObjCInstance
+from pyrubicon.objc import ObjCInstance  # api
 from pyrubicon.objc.runtime import Foundation, Class
 
 
