@@ -1,21 +1,29 @@
 import ctypes
 
-from pyrubicon.objc.api import ObjCClass, ObjCInstance, Block
-from pyrubicon.objc.api import objc_method
-from pyrubicon.objc.runtime import objc_id, send_super, SEL
+from pyrubicon.objc import (
+  Block,
+  ObjCClass,
+  ObjCInstance,
+  objc_method,
+)  # api
+from pyrubicon.objc import (
+  SEL,
+  objc_id,
+  send_super,
+)  # runtime
 # todo: utils ###############################################
 from pyrubicon.objc.runtime import Class, Foundation
 # todo: lifeCycle ###########################################
 import asyncio
 import logging
-from pyrubicon.objc.eventloop import EventLoopPolicy
+from pyrubicon.objc.eventloop import RubiconEventLoop
 # todo: exception ###########################################
 import sys
 import os
 # todo: mainThread ##########################################
 import functools
-from pyrubicon.objc.runtime import libobjc, objc_block
-
+from pyrubicon.objc import objc_block  # runtime
+from pyrubicon.objc.runtime import libobjc
 from rbedge import pdbr
 
 ObjCClass.auto_rename = True
@@ -48,12 +56,12 @@ def NSSetUncaughtExceptionHandler(_exc: ExceptionHandlerFuncType) -> None:
 
 def _objc_exception_handler(_exc):
   exc = ObjCInstance(_exc)
-  with open(os.path.expanduser('~/Documents/_rubicon_objc_exception.txt'),
-            'w') as f:
-    import datetime
+  _path_str = '~/Documents/_rubicon_objc_exception.txt'
+  with open(os.path.expanduser(_path_str), 'w') as f:
+    from datetime import datetime
     f.write(
       'The app was terminated due to an Objective-C exception. Details below:\n\n%s\n%s\n'
-      % (datetime.datetime.now(), exc))
+      % (datetime.now(), exc))
 
 
 _handler = ExceptionHandlerFuncType(_objc_exception_handler)
@@ -63,8 +71,8 @@ NSSetUncaughtExceptionHandler(_handler)
 # --- lifeCycle
 #############################################################
 #logging.basicConfig(level=logging.DEBUG)
-asyncio.set_event_loop_policy(EventLoopPolicy())
-loop = asyncio.new_event_loop()
+loop = RubiconEventLoop()
+asyncio.set_event_loop(loop)
 #loop.set_debug(True)
 
 #############################################################
@@ -114,7 +122,7 @@ UIBarButtonItem = ObjCClass('UIBarButtonItem')
 class RootNavigationController(UINavigationController):
 
   @objc_method
-  def dealloc(self):
+  def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
     print(f'- {NSStringFromClass(__class__)}: dealloc')
     # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -122,8 +130,13 @@ class RootNavigationController(UINavigationController):
     print('--- stop')
 
   @objc_method
-  def loadView(self):
-    send_super(__class__, self, 'loadView')
+  def loadView(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'loadView',
+      restype=None,
+    )
     print(f'{NSStringFromClass(__class__)}: loadView')
     navigationBarAppearance = UINavigationBarAppearance.new()
     navigationBarAppearance.configureWithDefaultBackground()
@@ -137,70 +150,96 @@ class RootNavigationController(UINavigationController):
     navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
 
   @objc_method
-  def viewDidLoad(self):
-    send_super(__class__, self, 'viewDidLoad')
+  def viewDidLoad(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidLoad',
+      restype=None,
+    )
     print(f'{NSStringFromClass(__class__)}: viewDidLoad')
     self.delegate = self
 
   @objc_method
-  def viewWillAppear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewWillAppear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewWillAppear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewWillAppear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'{NSStringFromClass(__class__)}: viewWillAppear_')
 
   @objc_method
-  def viewDidAppear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewDidAppear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewDidAppear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidAppear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'{NSStringFromClass(__class__)}: viewDidAppear_')
     print('↓ ---')
 
   @objc_method
-  def viewWillDisappear_(self, animated: bool):
+  def viewWillDisappear_(self, animated: bool) -> None:
     print('↑ ---')
-    send_super(__class__,
-               self,
-               'viewWillDisappear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+    send_super(
+      __class__,
+      self,
+      'viewWillDisappear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'{NSStringFromClass(__class__)}: viewWillDisappear_')
 
   @objc_method
-  def viewDidDisappear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewDidDisappear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewDidDisappear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidDisappear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
 
   @objc_method
-  def didReceiveMemoryWarning(self):
-    send_super(__class__, self, 'didReceiveMemoryWarning')
+  def didReceiveMemoryWarning(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'didReceiveMemoryWarning',
+      restype=None,
+    )
     print(f'{NSStringFromClass(__class__)}: didReceiveMemoryWarning')
 
   @objc_method
-  def closeButtonTapped_(self, sender):
+  def closeButtonTapped_(self, sender) -> None:
     print(f'{NSStringFromClass(__class__)}: doneButtonTapped:')
     self.dismissViewControllerAnimated_completion_(True, None)
 
   @objc_method
   def navigationController_willShowViewController_animated_(
-      self, navigationController, viewController, animated: bool):
+    self,
+    navigationController,
+    viewController,
+    animated: bool,
+  ) -> None:
     closeButtonItem = UIBarButtonItem.alloc().initWithBarButtonSystemItem(
       24, target=navigationController, action=SEL('closeButtonTapped:'))
 
@@ -218,70 +257,97 @@ UIViewController = ObjCClass('UIViewController')
 class MainViewController(UIViewController):
 
   @objc_method
-  def dealloc(self):
+  def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
     print(f'\t - {NSStringFromClass(__class__)}: dealloc')
 
   @objc_method
-  def loadView(self):
-    send_super(__class__, self, 'loadView')
+  def loadView(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'loadView',
+      restype=None,
+    )
     print(f'\t{NSStringFromClass(__class__)}: loadView')
 
   @objc_method
-  def viewDidLoad(self):
-    send_super(__class__, self, 'viewDidLoad')
+  def viewDidLoad(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidLoad',
+      restype=None,
+    )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
 
   @objc_method
-  def viewWillAppear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewWillAppear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewWillAppear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewWillAppear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'\t{NSStringFromClass(__class__)}: viewWillAppear_')
 
   @objc_method
-  def viewDidAppear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewDidAppear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewDidAppear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidAppear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'\t{NSStringFromClass(__class__)}: viewDidAppear_')
     print('\t↓ ---')
 
   @objc_method
-  def viewWillDisappear_(self, animated: bool):
+  def viewWillDisappear_(self, animated: bool) -> None:
     print('\t↑ ---')
-    send_super(__class__,
-               self,
-               'viewWillDisappear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+    send_super(
+      __class__,
+      self,
+      'viewWillDisappear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'\t{NSStringFromClass(__class__)}: viewWillDisappear_')
 
   @objc_method
-  def viewDidDisappear_(self, animated: bool):
-    send_super(__class__,
-               self,
-               'viewDidDisappear:',
-               animated,
-               argtypes=[
-                 ctypes.c_bool,
-               ])
+  def viewDidDisappear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidDisappear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
     print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
 
   @objc_method
-  def didReceiveMemoryWarning(self):
-    send_super(__class__, self, 'didReceiveMemoryWarning')
+  def didReceiveMemoryWarning(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'didReceiveMemoryWarning',
+      restype=None,
+    )
     print(f'\t{NSStringFromClass(__class__)}: didReceiveMemoryWarning')
 
 
@@ -338,3 +404,4 @@ if __name__ == '__main__':
   app.present()
   print('--- end ---')
   # >>> (6) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
