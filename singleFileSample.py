@@ -16,7 +16,7 @@ from pyrubicon.objc.runtime import Class, Foundation
 # todo: lifeCycle ###########################################
 import asyncio
 import logging
-from pyrubicon.objc.eventloop import RubiconEventLoop
+from pyrubicon.objc.eventloop import RubiconEventLoop, iOSLifecycle, CFLifecycle
 # todo: exception ###########################################
 import sys
 import os
@@ -71,14 +71,17 @@ NSSetUncaughtExceptionHandler(_handler)
 # --- lifeCycle
 #############################################################
 #logging.basicConfig(level=logging.DEBUG)
+'''
 try:
   asyncio.all_tasks()
 except RuntimeError as e:
   print(f'未稼働: {e}')
+'''
 #print(asyncio.all_tasks())
 loop = RubiconEventLoop()
-asyncio.set_event_loop(loop)
+#asyncio.set_event_loop(loop)
 #loop.set_debug(True)
+#loop.run_forever_cooperatively(lifecycle=iOSLifecycle())
 
 #############################################################
 # --- mainThread
@@ -150,7 +153,6 @@ def onMainThread(func=None, *, sync=True):
 
   return wrapper
 '''
-
 
 #############################################################
 # --- UINavigationController
@@ -303,6 +305,7 @@ class RootNavigationController(UINavigationController):
 #############################################################
 UIViewController = ObjCClass('UIViewController')
 #UIColor = ObjCClass('UIColor')
+
 
 class MainViewController(UIViewController):
 
@@ -477,7 +480,7 @@ class App:
   ) -> None:
 
     # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    @onMainThread#(sync=False)
+    @onMainThread  #(sync=False)
     def present_viewController(
       viewController: UIViewController,
       style: int,
@@ -499,20 +502,21 @@ class App:
       self.viewController,
       self.modalPresentationStyle,
     )
-    #self.main_loop()
+    self.main_loop()
+    #loop.run_forever_cooperatively(lifecycle=iOSLifecycle())
 
   def main_loop(self) -> None:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     try:
       print(f'try')
-      loop.run_forever()
+      #loop.run_forever()
+      loop.run_forever_cooperatively(lifecycle=CFLifecycle())
     except Exception as e:
       print(f'stop: {e}')
-      loop.stop()
+      #loop.stop()
     finally:
       print(f'finally')
-      loop.close()
-      
+      #loop.close()
 
 
 if __name__ == '__main__':
@@ -525,27 +529,3 @@ if __name__ == '__main__':
   print('--- end ---')
   # >>> (6) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-'''
-
-lifecycle=iOSLifecycle())  
-# 以降、既存の NSRunLoop が asyncio コールバ
-
-
-ん？
-
-```py
-loop = RubiconEventLoop()
-asyncio.set_event_loop(loop)
-```
-
-上のコードではなく
-
-```py
-loop = RubiconEventLoop()  
-loop.run_forever_cooperatively(lifecycle=iOSLifecycle())  
-```
-
-これだけで、勝手に始めたり終えたりするってこと？
-
-`loop.stop()` ではなく、`task.cancel()` ということね
-'''
