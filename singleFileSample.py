@@ -71,6 +71,11 @@ NSSetUncaughtExceptionHandler(_handler)
 # --- lifeCycle
 #############################################################
 #logging.basicConfig(level=logging.DEBUG)
+try:
+  asyncio.all_tasks()
+except RuntimeError as e:
+  print(f'未稼働: {e}')
+#print(asyncio.all_tasks())
 loop = RubiconEventLoop()
 asyncio.set_event_loop(loop)
 #loop.set_debug(True)
@@ -162,7 +167,7 @@ class RootNavigationController(UINavigationController):
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
     print(f'- {NSStringFromClass(__class__)}: dealloc')
     # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    loop.stop()
+    #loop.stop()
     print('--- stop')
 
   @objc_method
@@ -297,7 +302,7 @@ class RootNavigationController(UINavigationController):
 # --- UIViewController
 #############################################################
 UIViewController = ObjCClass('UIViewController')
-UIColor = ObjCClass('UIColor')
+#UIColor = ObjCClass('UIColor')
 
 class MainViewController(UIViewController):
 
@@ -327,7 +332,7 @@ class MainViewController(UIViewController):
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
-    self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
+    #self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
 
   @objc_method
   def viewWillAppear_(self, animated: bool) -> None:
@@ -494,7 +499,7 @@ class App:
       self.viewController,
       self.modalPresentationStyle,
     )
-    self.main_loop()
+    #self.main_loop()
 
   def main_loop(self) -> None:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -519,5 +524,28 @@ if __name__ == '__main__':
   app.present()
   print('--- end ---')
   # >>> (6) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  del loop
 
+'''
+
+lifecycle=iOSLifecycle())  
+# 以降、既存の NSRunLoop が asyncio コールバ
+
+
+ん？
+
+```py
+loop = RubiconEventLoop()
+asyncio.set_event_loop(loop)
+```
+
+上のコードではなく
+
+```py
+loop = RubiconEventLoop()  
+loop.run_forever_cooperatively(lifecycle=iOSLifecycle())  
+```
+
+これだけで、勝手に始めたり終えたりするってこと？
+
+`loop.stop()` ではなく、`task.cancel()` ということね
+'''
