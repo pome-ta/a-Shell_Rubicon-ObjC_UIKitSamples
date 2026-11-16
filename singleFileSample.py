@@ -92,6 +92,12 @@ def dispatch_get_main_queue():
   return ObjCInstance(ctypes.cast(ctypes.byref(_dispatch_main_q), objc_id))
 
 
+libobjc.dispatch_sync.restype = None
+libobjc.dispatch_sync.argtypes = [
+  objc_id,
+  objc_block,
+]
+
 libobjc.dispatch_async.restype = None
 libobjc.dispatch_async.argtypes = [
   objc_id,
@@ -109,6 +115,36 @@ def onMainThread(func):
     libobjc.dispatch_async(dispatch_get_main_queue(), block)
 
   return wrapper
+
+
+'''
+def onMainThread(func=None, *, sync=True):
+  if func is None:
+    return functools.partial(onMainThread, sync=sync)
+
+  @functools.wraps(func)
+  def wrapper(*args, **kwargs):
+    if NSThread.isMainThread:
+      return func(*args, **kwargs)
+
+    queue = dispatch_get_main_queue()
+    results = []  # 戻り値キャプチャ用
+
+    def task():
+      res = func(*args, **kwargs)
+      results.append(res)
+
+    block = Block(task, None)
+
+    if sync:
+      libobjc.dispatch_sync(queue, block)
+      return results[0] if results else None
+    else:
+      libobjc.dispatch_async(queue, block)
+      return None  # asyncは戻り値なし
+
+  return wrapper
+'''
 
 
 #############################################################
@@ -261,14 +297,15 @@ class RootNavigationController(UINavigationController):
 # --- UIViewController
 #############################################################
 UIViewController = ObjCClass('UIViewController')
-
+UIColor = ObjCClass('UIColor')
 
 class MainViewController(UIViewController):
 
   @objc_method
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
-    print(f'\t - {NSStringFromClass(__class__)}: dealloc')
+    #print(f'\t - {NSStringFromClass(__class__)}: dealloc')
+    pass
 
   @objc_method
   def loadView(self) -> None:
@@ -290,7 +327,7 @@ class MainViewController(UIViewController):
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
-
+    self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
 
   @objc_method
   def viewWillAppear_(self, animated: bool) -> None:
@@ -435,7 +472,7 @@ class App:
   ) -> None:
 
     # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    @onMainThread
+    @onMainThread#(sync=False)
     def present_viewController(
       viewController: UIViewController,
       style: int,
@@ -470,6 +507,7 @@ class App:
     finally:
       print(f'finally')
       loop.close()
+      
 
 
 if __name__ == '__main__':
@@ -481,4 +519,5 @@ if __name__ == '__main__':
   app.present()
   print('--- end ---')
   # >>> (6) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  del loop
 
