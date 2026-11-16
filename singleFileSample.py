@@ -32,10 +32,15 @@ ObjCClass.auto_rename = True
 #############################################################
 # --- utils
 def NSStringFromClass(cls: Class) -> ObjCInstance:
-  _NSStringFromClass = Foundation.NSStringFromClass
-  _NSStringFromClass.restype = ctypes.c_void_p
-  _NSStringFromClass.argtypes = [Class]
-  return ObjCInstance(_NSStringFromClass(cls))
+  try:
+    _func = NSStringFromClass._cfunc
+  except AttributeError:
+    _func = Foundation.NSStringFromClass
+    _func.restype = objc_id
+    _func.argtypes = [Class]
+    NSStringFromClass._cfunc = _func
+
+  return ObjCInstance(_func(cls))
 
 
 #############################################################
@@ -99,60 +104,43 @@ _dispatch_main_q = struct_dispatch_queue_s.in_dll(libobjc, '_dispatch_main_q')
 def dispatch_get_main_queue():
   return ObjCInstance(ctypes.cast(ctypes.byref(_dispatch_main_q), objc_id))
 
-
-libobjc.dispatch_sync.restype = None
-libobjc.dispatch_sync.argtypes = [
-  objc_id,
-  objc_block,
-]
-
+'''
 libobjc.dispatch_async.restype = None
 libobjc.dispatch_async.argtypes = [
   objc_id,
   objc_block,
 ]
-
+'''
+def dispatch_async(queue, block_obj:objc_block):
+  try:
+    _func = dispatch_async._cfunc
+  except AttributeError:
+    _func = libobjc.dispatch_async
+    _func.restype = None
+    _func.argtypes = [
+      objc_id,
+      objc_block,
+    ]
+    dispatch_async._cfunc = _func
+  
+  _func(queue, block_obj)
+  
 
 def onMainThread(func):
 
   @functools.wraps(func)
   def wrapper(*args, **kwargs):
     if NSThread.isMainThread:
+      print('NSThread')
       func(*args, **kwargs)
+    print('block')
     block = Block(functools.partial(func, *args, **kwargs), None)
-    libobjc.dispatch_async(dispatch_get_main_queue(), block)
+    dispatch_async(dispatch_get_main_queue(), block)
 
   return wrapper
 
 
-'''
-def onMainThread(func=None, *, sync=True):
-  if func is None:
-    return functools.partial(onMainThread, sync=sync)
 
-  @functools.wraps(func)
-  def wrapper(*args, **kwargs):
-    if NSThread.isMainThread:
-      return func(*args, **kwargs)
-
-    queue = dispatch_get_main_queue()
-    results = []  # 戻り値キャプチャ用
-
-    def task():
-      res = func(*args, **kwargs)
-      results.append(res)
-
-    block = Block(task, None)
-
-    if sync:
-      libobjc.dispatch_sync(queue, block)
-      return results[0] if results else None
-    else:
-      libobjc.dispatch_async(queue, block)
-      return None  # asyncは戻り値なし
-
-  return wrapper
-'''
 
 #############################################################
 # --- UINavigationController
@@ -170,7 +158,7 @@ class RootNavigationController(UINavigationController):
     print(f'- {NSStringFromClass(__class__)}: dealloc')
     # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     #loop.stop()
-    print('--- stop')
+    
 
   @objc_method
   def loadView(self) -> None:
@@ -267,6 +255,7 @@ class RootNavigationController(UINavigationController):
     )
     print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
 
+
   @objc_method
   def didReceiveMemoryWarning(self) -> None:
     send_super(
@@ -304,7 +293,7 @@ class RootNavigationController(UINavigationController):
 # --- UIViewController
 #############################################################
 UIViewController = ObjCClass('UIViewController')
-#UIColor = ObjCClass('UIColor')
+UIColor = ObjCClass('UIColor')
 
 
 class MainViewController(UIViewController):
@@ -335,7 +324,7 @@ class MainViewController(UIViewController):
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
-    #self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
+    self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
 
   @objc_method
   def viewWillAppear_(self, animated: bool) -> None:
@@ -394,7 +383,9 @@ class MainViewController(UIViewController):
       ],
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
-
+    if self.isBeingDismissed:
+      loop.stop()
+      print('--- stop')
   @objc_method
   def didReceiveMemoryWarning(self) -> None:
     send_super(
@@ -502,15 +493,16 @@ class App:
       self.viewController,
       self.modalPresentationStyle,
     )
-    self.main_loop()
+    loop.run_forever()
+    #self.main_loop()
     #loop.run_forever_cooperatively(lifecycle=iOSLifecycle())
 
   def main_loop(self) -> None:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     try:
       print(f'try')
-      #loop.run_forever()
-      loop.run_forever_cooperatively(lifecycle=CFLifecycle())
+      loop.run_forever()
+      #loop.run_forever_cooperatively(lifecycle=CFLifecycle())
     except Exception as e:
       print(f'stop: {e}')
       #loop.stop()
