@@ -4,6 +4,7 @@ from pyrubicon.objc import (
   Block,
   ObjCClass,
   ObjCInstance,
+  ObjCProtocol,
   objc_method,
 )  # api
 from pyrubicon.objc import (
@@ -23,7 +24,7 @@ import os
 # todo: mainThread ##########################################
 import functools
 from pyrubicon.objc import objc_block  # runtime
-from pyrubicon.objc.runtime import load_library, libobjc
+from pyrubicon.objc.runtime import load_library, libobjc, autoreleasepool
 from rbedge import pdbr
 
 ObjCClass.auto_rename = True
@@ -32,6 +33,8 @@ UIApplication = ObjCClass("UIApplication")
 UIViewController = ObjCClass("UIViewController")
 UIColor = ObjCClass("UIColor")
 NSObject = ObjCClass("NSObject")
+UINavigationController = ObjCClass('UINavigationController')
+UINavigationControllerDelegate = ObjCProtocol('UINavigationControllerDelegate')
 
 
 def NSStringFromClass(cls: Class) -> ObjCInstance:
@@ -51,16 +54,22 @@ loop = RubiconEventLoop()
 #############################################################
 # --- mainThread
 #############################################################
-#libSystem = load_library('System')
+libSystem = load_library('System')
 NSThread = ObjCClass('NSThread')
+'''
+print(libobjc)
+print(libSystem)
+print(libobjc == libSystem)
+'''
 
 
 class struct_dispatch_queue_s(ctypes.Structure):
   pass  # No _fields_, because this is an opaque structure.
 
 
-_dispatch_main_q = struct_dispatch_queue_s.in_dll(libobjc, '_dispatch_main_q')
-#_dispatch_main_q = struct_dispatch_queue_s.in_dll(libSystem, '_dispatch_main_q')
+#_dispatch_main_q = struct_dispatch_queue_s.in_dll(libobjc, '_dispatch_main_q')
+_dispatch_main_q = struct_dispatch_queue_s.in_dll(libSystem,
+                                                  '_dispatch_main_q')
 
 
 def dispatch_get_main_queue():
@@ -71,8 +80,8 @@ def dispatch_async(queue, block_obj: objc_block):
   try:
     _func = dispatch_async._cfunc
   except AttributeError:
-    _func = libobjc.dispatch_async
-    #_func = libSystem.dispatch_async
+    #_func = libobjc.dispatch_async
+    _func = libSystem.dispatch_async
     _func.restype = None
     _func.argtypes = [
       objc_id,
@@ -97,10 +106,46 @@ def onMainThread(func):
   return wrapper
 
 
-UINavigationController = ObjCClass('UINavigationController')
+class NavigationController(UINavigationController,
+                           protocols=[UINavigationControllerDelegate]):
+  #class NavigationController(UINavigationController,protocols=[UINavigationControllerDelegate]):
+  
+  @objc_method
+  def dealloc(self) -> None:
+    # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
+    #print(f'\t - {NSStringFromClass(__class__)}: dealloc')
+    pass
+  
+
+  @objc_method
+  def viewDidLoad(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidLoad',
+      restype=None,
+    )
+    print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
+    #self.delegate = self
+  @objc_method
+  def viewDidDisappear_(self, animated: bool) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidDisappear:',
+      animated,
+      restype=None,
+      argtypes=[
+        ctypes.c_bool,
+      ],
+    )
+    print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
+    if self.isBeingDismissed:
+      print('s: stop')
+      loop.stop()
+      print('e: stop')
 
 
-# auto_rename=True を付けておくと a-shell で何度実行してもエラーにならない
 class MyViewController(UIViewController):
 
   @objc_method
@@ -129,7 +174,6 @@ class MyViewController(UIViewController):
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
     self.navigationItem.title = NSStringFromClass(__class__)
-
 
   @objc_method
   def viewWillAppear_(self, animated: bool) -> None:
@@ -188,10 +232,12 @@ class MyViewController(UIViewController):
       ],
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
+    '''
     if self.isBeingDismissed:
       print('s: stop')
       loop.stop()
       print('e: stop')
+    '''
 
   @objc_method
   def didReceiveMemoryWarning(self) -> None:
@@ -202,8 +248,6 @@ class MyViewController(UIViewController):
       restype=None,
     )
     print(f'\t{NSStringFromClass(__class__)}: didReceiveMemoryWarning')
-
-
 
 
 class ModalPresenter(NSObject):
@@ -220,11 +264,17 @@ class ModalPresenter(NSObject):
 
     rootViewController = windowScene.keyWindow.rootViewController
 
-    vc.modalPresentationStyle = 1
+    presentViewController = NavigationController.alloc(
+    ).initWithRootViewController_(vc)
 
-    rootViewController.presentViewController(vc,
-                                             animated=True,
-                                             completion=None)
+    #vc.modalPresentationStyle = 1
+    presentViewController.modalPresentationStyle = 1
+
+    rootViewController.presentViewController(
+      presentViewController,
+      animated=True,
+      completion=None,
+    )
     '''
 
     app = UIApplication.sharedApplication
@@ -235,6 +285,9 @@ class ModalPresenter(NSObject):
 
     rootVC.presentViewController_animated_completion_(vc, True, None)
     '''
+
+
+_keep_alive = []
 
 
 class App:
@@ -270,15 +323,24 @@ class App:
       style: int,
     ) -> None:
 
-      viewController.setModalPresentationStyle_(style)
+      presentViewController = NavigationController.alloc(
+        #presentViewController = UINavigationController.alloc(
+      ).initWithRootViewController_(viewController)  #.autorelease()
+      _keep_alive.append(presentViewController)
+
+      #pdbr.state(UINavigationController)
+
+      #viewController.setModalPresentationStyle_(style)
+      presentViewController.setModalPresentationStyle_(style)
 
       self.rootViewController.presentViewController_animated_completion_(
-        viewController,
+        presentViewController,
         True,
         None,
       )
 
     # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    #with autoreleasepool():
     present_viewController(
       self.viewController,
       self.modalPresentationStyle,
@@ -289,8 +351,7 @@ class App:
     #loop.run_forever_cooperatively(lifecycle=iOSLifecycle())
 
 
-
-
+#presentViewController = NavigationController.alloc().initWithRootViewController_(viewController)
 '''
 if __name__ == '__main__':
   print('--- run ---')
@@ -317,6 +378,7 @@ if __name__ == '__main__':
 '''
 if __name__ == '__main__':
   print('--- run ---')
+
   main_vc = MyViewController.new()
   presentation_style = 1
   app = App(main_vc, presentation_style)
