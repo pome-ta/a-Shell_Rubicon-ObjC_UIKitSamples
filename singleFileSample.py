@@ -35,6 +35,7 @@ UIColor = ObjCClass("UIColor")
 NSObject = ObjCClass("NSObject")
 UINavigationController = ObjCClass('UINavigationController')
 UINavigationControllerDelegate = ObjCProtocol('UINavigationControllerDelegate')
+UIBarButtonItem = ObjCClass('UIBarButtonItem')
 
 
 def NSStringFromClass(cls: Class) -> ObjCInstance:
@@ -106,16 +107,19 @@ def onMainThread(func):
   return wrapper
 
 
+'''
 class NavigationController(UINavigationController,
                            protocols=[UINavigationControllerDelegate]):
-  #class NavigationController(UINavigationController,protocols=[UINavigationControllerDelegate]):
-  
+'''
+
+
+class NavigationController(UINavigationController):
+
   @objc_method
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
     #print(f'\t - {NSStringFromClass(__class__)}: dealloc')
     pass
-  
 
   @objc_method
   def viewDidLoad(self) -> None:
@@ -126,7 +130,8 @@ class NavigationController(UINavigationController,
       restype=None,
     )
     print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
-    #self.delegate = self
+    self.delegate = self
+
   @objc_method
   def viewDidDisappear_(self, animated: bool) -> None:
     send_super(
@@ -144,6 +149,28 @@ class NavigationController(UINavigationController,
       print('s: stop')
       loop.stop()
       print('e: stop')
+
+  @objc_method
+  def closeButtonTapped_(self, sender) -> None:
+    print(f'{NSStringFromClass(__class__)}: doneButtonTapped:')
+    self.dismissViewControllerAnimated_completion_(True, None)
+
+  @objc_method
+  def navigationController_willShowViewController_animated_(
+    self,
+    navigationController,
+    viewController,
+    animated: bool,
+  ) -> None:
+    closeButtonItem = UIBarButtonItem.alloc().initWithBarButtonSystemItem(
+      24,
+      target=navigationController,
+      action=SEL('closeButtonTapped:'),
+    )
+
+    visibleViewController = navigationController.visibleViewController
+    navigationItem = visibleViewController.navigationItem
+    navigationItem.rightBarButtonItem = closeButtonItem
 
 
 class MyViewController(UIViewController):
