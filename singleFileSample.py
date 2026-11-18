@@ -22,7 +22,7 @@ import os
 import functools
 from pyrubicon.objc import Block  # api
 from pyrubicon.objc import objc_block  # runtime
-from pyrubicon.objc.runtime import load_library
+from pyrubicon.objc.runtime import load_library, autoreleasepool
 
 from rbedge import pdbr
 
@@ -80,7 +80,6 @@ NSSetUncaughtExceptionHandler(_handler)
 # --- lifeCycle
 #############################################################
 loop = RubiconEventLoop()
-
 #############################################################
 # --- mainThread
 #############################################################
@@ -126,6 +125,7 @@ def onMainThread(func):
   def wrapper(*args, **kwargs):
     if NSThread.isMainThread:
       func(*args, **kwargs)
+      return
     block = Block(functools.partial(func, *args, **kwargs), None)
     dispatch_async(dispatch_get_main_queue(), block)
 
@@ -412,16 +412,14 @@ class App:
       self.modalPresentationStyle,
     )
     self._main_loop()
-    
+
   def _main_loop(self) -> None:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     try:
       loop.run_forever()
     except Exception as e:
-      loop.stop()
       print(e)
     loop.close()
-    _keep_alive = []
 
 
 if __name__ == '__main__':
