@@ -79,7 +79,17 @@ NSSetUncaughtExceptionHandler(_handler)
 #############################################################
 # --- lifeCycle
 #############################################################
-loop = RubiconEventLoop()
+#loop = RubiconEventLoop()
+
+
+@functools.lru_cache(maxsize=1)
+def get_loop():
+  loop = RubiconEventLoop()
+  if not loop.is_running():
+    loop.run_forever_cooperatively()
+  return loop
+
+
 #############################################################
 # --- mainThread
 #############################################################
@@ -227,7 +237,8 @@ class RootNavigationController(UINavigationController):
     if self.isBeingDismissed:
       # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       #loop.stop()
-      loop.call_later(0.2, loop.stop)
+      #loop.call_later(0.2, loop.stop)
+      pass
 
   @objc_method
   def closeButtonTapped_(self, sender) -> None:
@@ -396,6 +407,7 @@ class App:
       viewController: UIViewController,
       style: int,
     ) -> None:
+      self._main_loop()
       presentController = RootNavigationController.alloc(
       ).initWithRootViewController_(viewController)
 
@@ -412,15 +424,18 @@ class App:
       self.viewController,
       self.modalPresentationStyle,
     )
-    self._main_loop()
+    #self._main_loop()
 
   def _main_loop(self) -> None:
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    get_loop()
+    '''
     try:
       loop.run_forever()
     except Exception as e:
       print(e)
     #loop.close()
+    '''
 
 
 if __name__ == '__main__':
