@@ -226,7 +226,8 @@ class RootNavigationController(UINavigationController):
     print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
     if self.isBeingDismissed:
       # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      loop.stop()
+      #loop.stop()
+      loop.call_later(0.2, loop.stop)
 
   @objc_method
   def closeButtonTapped_(self, sender) -> None:
@@ -404,7 +405,7 @@ class App:
         True,
         None,
       )
-      _keep_alive.append(presentController)
+      #_keep_alive.append(presentController)
 
     # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     present_viewController(
@@ -419,7 +420,7 @@ class App:
       loop.run_forever()
     except Exception as e:
       print(e)
-    loop.close()
+    #loop.close()
 
 
 if __name__ == '__main__':
