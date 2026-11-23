@@ -13,7 +13,6 @@ libSystem = load_library('System')
 NSThread = ObjCClass('NSThread')
 
 
-
 class struct_dispatch_queue_s(ctypes.Structure):
   pass  # No _fields_, because this is an opaque structure.
 
@@ -24,13 +23,11 @@ _dispatch_main_q = struct_dispatch_queue_s.in_dll(
 )
 
 
-
 def dispatch_get_main_queue():
   return ObjCInstance(ctypes.cast(
     ctypes.byref(_dispatch_main_q),
     objc_id,
   ))
-
 
 
 def dispatch_async(queue, block_obj: objc_block):

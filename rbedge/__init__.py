@@ -1,6 +1,5 @@
 __version__ = '0.0.0'
 
-
 import os
 import ctypes
 
@@ -8,7 +7,6 @@ from pyrubicon.objc import ObjCClass, ObjCInstance  # api
 from pyrubicon.objc.runtime import Foundation
 
 ObjCClass.auto_rename = True
-
 
 #############################################################
 # --- exception

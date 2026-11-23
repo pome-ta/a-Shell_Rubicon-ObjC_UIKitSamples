@@ -1,13 +1,12 @@
 import ctypes
 
-from pyrubicon.objc import ObjCClass, objc_method # api
+from pyrubicon.objc import ObjCClass, objc_method  # api
 from pyrubicon.objc import send_super, SEL  # runtime
 
 from .lifeCycle import loop
 from .enumerations import UIBarButtonSystemItem
 
 from .functions import NSStringFromClass
-
 
 UINavigationController = ObjCClass('UINavigationController')
 UIBarButtonItem = ObjCClass('UIBarButtonItem')
@@ -123,5 +122,4 @@ class RootNavigationController(UINavigationController):
     visibleViewController = navigationController.visibleViewController
     navigationItem = visibleViewController.navigationItem
     navigationItem.rightBarButtonItem = closeButtonItem
-
 
