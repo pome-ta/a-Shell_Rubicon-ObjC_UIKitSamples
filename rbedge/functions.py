@@ -1,12 +1,18 @@
 import ctypes
 
 from pyrubicon.objc import ObjCInstance  # api
+from pyrubicon.objc import objc_id  # runtime
 from pyrubicon.objc.runtime import Foundation, Class
 
 
 def NSStringFromClass(cls: Class) -> ObjCInstance:
-  _NSStringFromClass = Foundation.NSStringFromClass
-  _NSStringFromClass.restype = ctypes.c_void_p
-  _NSStringFromClass.argtypes = [Class]
-  return ObjCInstance(_NSStringFromClass(cls))
+  try:
+    _func = NSStringFromClass._cfunc
+  except AttributeError:
+    _func = Foundation.NSStringFromClass
+    _func.restype = objc_id
+    _func.argtypes = [Class]
+    NSStringFromClass._cfunc = _func
+
+  return ObjCInstance(_func(cls))
 

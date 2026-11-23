@@ -1,23 +1,23 @@
 __version__ = '0.0.0'
 
-import sys
+
 import os
 import ctypes
 
-from pyrubicon.objc import (
-  ObjCClass,
-  ObjCProtocol,
-  ObjCInstance,
-)  # api
+from pyrubicon.objc import ObjCClass, ObjCInstance  # api
 from pyrubicon.objc.runtime import Foundation
 
 ObjCClass.auto_rename = True
-ObjCProtocol.auto_rename = True
 
-#######################################################
+
+#############################################################
 # --- exception
-#######################################################
-# ref: from objc_util.py of Pythonista3 module
+#############################################################
+# todo: from objc_util.py of Pythonista3
+#  呼び出し方法と出力先を調整
+#    - `~/Documents/_objc_exception.txt`
+#    - `~/Documents/_rubicon_objc_exception.txt`
+# Set a handler for uncaught ObjC exceptions that writes to a log file:
 ExceptionHandlerFuncType = ctypes.CFUNCTYPE(None, ctypes.c_void_p)
 
 

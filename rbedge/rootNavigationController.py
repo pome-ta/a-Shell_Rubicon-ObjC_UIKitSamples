@@ -1,10 +1,6 @@
 import ctypes
 
-from pyrubicon.objc import (
-  ObjCClass,
-  objc_method,
-  objc_property,
-)  # api
+from pyrubicon.objc import ObjCClass, objc_method # api
 from pyrubicon.objc import send_super, SEL  # runtime
 
 from .lifeCycle import loop
@@ -12,8 +8,8 @@ from .enumerations import UIBarButtonSystemItem
 
 from .functions import NSStringFromClass
 
+
 UINavigationController = ObjCClass('UINavigationController')
-UINavigationBarAppearance = ObjCClass('UINavigationBarAppearance')
 UIBarButtonItem = ObjCClass('UIBarButtonItem')
 
 
@@ -22,8 +18,10 @@ class RootNavigationController(UINavigationController):
   @objc_method
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
-    #print(f'- {NSStringFromClass(__class__)}: dealloc')
-    loop.stop()
+    print(f'- {NSStringFromClass(__class__)}: dealloc')
+    print('--- loop stop Call ---')
+    # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    loop.call_soon(loop.stop)
 
   @objc_method
   def loadView(self) -> None:
@@ -33,18 +31,7 @@ class RootNavigationController(UINavigationController):
       'loadView',
       restype=None,
     )
-    #print(f'{NSStringFromClass(__class__)}: loadView')
-    navigationBarAppearance = UINavigationBarAppearance.new()
-    navigationBarAppearance.configureWithDefaultBackground()
-    #navigationBarAppearance.configureWithOpaqueBackground()
-    #navigationBarAppearance.configureWithTransparentBackground()
-    '''
-    navigationBar = self.navigationBar
-    navigationBar.standardAppearance = navigationBarAppearance
-    navigationBar.scrollEdgeAppearance = navigationBarAppearance
-    navigationBar.compactAppearance = navigationBarAppearance
-    navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
-    '''
+    print(f'{NSStringFromClass(__class__)}: loadView')
 
   @objc_method
   def viewDidLoad(self) -> None:
@@ -54,7 +41,7 @@ class RootNavigationController(UINavigationController):
       'viewDidLoad',
       restype=None,
     )
-    #print(f'{NSStringFromClass(__class__)}: viewDidLoad')
+    print(f'{NSStringFromClass(__class__)}: viewDidLoad')
     self.delegate = self
 
   @objc_method
@@ -69,7 +56,7 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    #print(f'{NSStringFromClass(__class__)}: viewWillAppear_')
+    print(f'{NSStringFromClass(__class__)}: viewWillAppear_')
 
   @objc_method
   def viewDidAppear_(self, animated: bool) -> None:
@@ -83,10 +70,12 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    #print(f'{NSStringFromClass(__class__)}: viewDidAppear_')
+    print(f'{NSStringFromClass(__class__)}: viewDidAppear_')
+    print('↓ ---')
 
   @objc_method
   def viewWillDisappear_(self, animated: bool) -> None:
+    print('↑ ---')
     send_super(
       __class__,
       self,
@@ -97,7 +86,7 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    #print(f'{NSStringFromClass(__class__)}: viewWillDisappear_')
+    print(f'{NSStringFromClass(__class__)}: viewWillDisappear_')
 
   @objc_method
   def viewDidDisappear_(self, animated: bool) -> None:
@@ -111,31 +100,28 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    #print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
+    print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
 
   @objc_method
-  def didReceiveMemoryWarning(self) -> None:
-    send_super(
-      __class__,
-      self,
-      'didReceiveMemoryWarning',
-      restype=None,
-    )
-    print(f'{NSStringFromClass(__class__)}: didReceiveMemoryWarning')
-
-  @objc_method
-  def closeButtonTapped_(self, sender):
+  def closeButtonTapped_(self, sender) -> None:
+    print(f'{NSStringFromClass(__class__)}: doneButtonTapped:')
     self.dismissViewControllerAnimated_completion_(True, None)
 
   @objc_method
   def navigationController_willShowViewController_animated_(
-      self, navigationController, viewController, animated: bool):
+    self,
+    navigationController,
+    viewController,
+    animated: bool,
+  ) -> None:
     closeButtonItem = UIBarButtonItem.alloc().initWithBarButtonSystemItem(
       UIBarButtonSystemItem.close,
       target=navigationController,
-      action=SEL('closeButtonTapped:'))
+      action=SEL('closeButtonTapped:'),
+    )
 
     visibleViewController = navigationController.visibleViewController
     navigationItem = visibleViewController.navigationItem
     navigationItem.rightBarButtonItem = closeButtonItem
+
 

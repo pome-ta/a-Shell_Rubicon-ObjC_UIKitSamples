@@ -1,4 +1,4 @@
-from ctypes import byref, cast, Structure
+import ctypes
 import functools
 
 from pyrubicon.objc import (
@@ -7,27 +7,45 @@ from pyrubicon.objc import (
   ObjCInstance,
 )  # api
 from pyrubicon.objc import objc_block, objc_id  # runtime
-from pyrubicon.objc.runtime import libobjc
+from pyrubicon.objc.runtime import load_library
 
+libSystem = load_library('System')
 NSThread = ObjCClass('NSThread')
 
 
-class struct_dispatch_queue_s(Structure):
+
+class struct_dispatch_queue_s(ctypes.Structure):
   pass  # No _fields_, because this is an opaque structure.
 
 
-_dispatch_main_q = struct_dispatch_queue_s.in_dll(libobjc, '_dispatch_main_q')
+_dispatch_main_q = struct_dispatch_queue_s.in_dll(
+  libSystem,
+  '_dispatch_main_q',
+)
+
 
 
 def dispatch_get_main_queue():
-  return ObjCInstance(cast(byref(_dispatch_main_q), objc_id))
+  return ObjCInstance(ctypes.cast(
+    ctypes.byref(_dispatch_main_q),
+    objc_id,
+  ))
 
 
-libobjc.dispatch_async.restype = None
-libobjc.dispatch_async.argtypes = [
-  objc_id,
-  objc_block,
-]
+
+def dispatch_async(queue, block_obj: objc_block):
+  try:
+    _func = dispatch_async._cfunc
+  except AttributeError:
+    _func = libSystem.dispatch_async
+    _func.restype = None
+    _func.argtypes = [
+      objc_id,
+      objc_block,
+    ]
+    dispatch_async._cfunc = _func
+
+  _func(queue, block_obj)
 
 
 def onMainThread(func):
@@ -36,8 +54,9 @@ def onMainThread(func):
   def wrapper(*args, **kwargs):
     if NSThread.isMainThread:
       func(*args, **kwargs)
+      return
     block = Block(functools.partial(func, *args, **kwargs), None)
-    libobjc.dispatch_async(dispatch_get_main_queue(), block)
+    dispatch_async(dispatch_get_main_queue(), block)
 
   return wrapper
 

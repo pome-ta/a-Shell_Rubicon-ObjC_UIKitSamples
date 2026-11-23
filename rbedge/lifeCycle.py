@@ -1,4 +1,3 @@
-import asyncio
 from pyrubicon.objc.eventloop import RubiconEventLoop
 
 __all__ = [
@@ -6,5 +5,3 @@ __all__ = [
 ]
 
 loop = RubiconEventLoop()
-asyncio.set_event_loop(loop)
-
