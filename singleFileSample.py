@@ -1,16 +1,19 @@
 import ctypes
 
-# todo: main ###############################################
+# todo: main ################################################
 from pyrubicon.objc import (
+  NSObject,
   ObjCClass,
   ObjCInstance,
   objc_method,
+  objc_property,
 )  # api
 from pyrubicon.objc import (
   SEL,
   objc_id,
   send_super,
 )  # runtime
+
 # todo: utils ###############################################
 from pyrubicon.objc.runtime import Class, Foundation
 # todo: lifeCycle ###########################################
@@ -22,7 +25,7 @@ import os
 import functools
 from pyrubicon.objc import Block  # api
 from pyrubicon.objc import objc_block  # runtime
-from pyrubicon.objc.runtime import load_library, autoreleasepool
+from pyrubicon.objc.runtime import load_library
 
 from rbedge import pdbr
 
@@ -47,7 +50,7 @@ def NSStringFromClass(cls: Class) -> ObjCInstance:
 # --- exception
 #############################################################
 # todo: from objc_util.py of Pythonista3
-#  呼び出し方法と出力先を調整
+#  呼び出し方法と出力先を調整
 #    - `~/Documents/_objc_exception.txt`
 #    - `~/Documents/_rubicon_objc_exception.txt`
 # Set a handler for uncaught ObjC exceptions that writes to a log file:
@@ -79,16 +82,7 @@ NSSetUncaughtExceptionHandler(_handler)
 #############################################################
 # --- lifeCycle
 #############################################################
-#loop = RubiconEventLoop()
-
-
-@functools.lru_cache(maxsize=1)
-def get_loop():
-  loop = RubiconEventLoop()
-  if not loop.is_running():
-    loop.run_forever_cooperatively()
-  return loop
-
+loop = RubiconEventLoop()
 
 #############################################################
 # --- mainThread
@@ -155,6 +149,9 @@ class RootNavigationController(UINavigationController):
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
     print(f'- {NSStringFromClass(__class__)}: dealloc')
+    print('--- loop stop Call ---')
+    # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    loop.call_soon(loop.stop)
 
   @objc_method
   def loadView(self) -> None:
@@ -174,7 +171,7 @@ class RootNavigationController(UINavigationController):
       'viewDidLoad',
       restype=None,
     )
-    print(f'\t{NSStringFromClass(__class__)}: viewDidLoad')
+    print(f'{NSStringFromClass(__class__)}: viewDidLoad')
     self.delegate = self
 
   @objc_method
@@ -233,12 +230,7 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    print(f'\t{NSStringFromClass(__class__)}: viewDidDisappear_')
-    if self.isBeingDismissed:
-      # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      #loop.stop()
-      #loop.call_later(0.2, loop.stop)
-      pass
+    print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
 
   @objc_method
   def closeButtonTapped_(self, sender) -> None:
@@ -372,78 +364,99 @@ class MainViewController(UIViewController):
 #############################################################
 UIApplication = ObjCClass('UIApplication')
 
-_keep_alive = []
 
+class Application(NSObject):
 
-class App:
+  viewController = objc_property(ObjCInstance)
+  navigationClass = objc_property(ObjCClass)
 
-  def __init__(
+  @objc_method
+  def dealloc(self) -> None:
+    # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
+    print(f'- {NSStringFromClass(__class__)}: dealloc')
+
+  @objc_method
+  def configureWithViewController_navigationClass_(
     self,
-    viewController: UIViewController,
-    modalPresentationStyle=1,
-  ):
+    viewController: ObjCInstance,
+    navigationClass: ObjCClass,
+  ) -> ObjCInstance:
+    self = ObjCInstance(
+      send_super(__class__, self, 'init', restype=objc_id, argtypes=[]))
+    if self is None:
+      return None
+
     self.viewController = viewController
-    self.modalPresentationStyle = modalPresentationStyle
+    self.navigationClass = navigationClass
 
-    self.set_rootViewController()
+    return self
 
-  def set_rootViewController(self) -> None:
-    # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    sharedApplication = UIApplication.sharedApplication
-    objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
+  @objc_method
+  def initWithViewController_(
+    self,
+    viewController: ObjCInstance,
+  ) -> ObjCInstance:
+    return self.configureWithViewController_navigationClass_(
+      viewController,
+      RootNavigationController,
+    )
 
-    windowScene = next(_scene
-                       for _scene in iter(objectEnumerator.nextObject, None)
-                       if _scene.activationState == 0)
+  @objc_method
+  def initWithViewController_navigationClass_(
+    self,
+    viewController: ObjCInstance,
+    navigationClass: ObjCClass,
+  ) -> ObjCInstance:
+    return self.configureWithViewController_navigationClass_(
+      viewController,
+      navigationClass,
+    )
 
-    rootViewController = windowScene.keyWindow.rootViewController
-    self.rootViewController = rootViewController
-
-  def present(self) -> None:
-
+  @objc_method
+  def presentWithStyle_(self, style: int) -> None:
     # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     @onMainThread
-    def present_viewController(
-      viewController: UIViewController,
-      style: int,
-    ) -> None:
-      self._main_loop()
-      presentController = RootNavigationController.alloc(
-      ).initWithRootViewController_(viewController)
+    def _main_thread_present() -> None:
+      # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      sharedApplication = UIApplication.sharedApplication
+      objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
+      windowScene = next(_scene
+                         for _scene in iter(objectEnumerator.nextObject, None)
+                         if _scene.activationState == 0)
+      keyWindowViewController = windowScene.keyWindow.rootViewController
 
+      presentController = self.navigationClass.alloc(
+      ).initWithRootViewController_(self.viewController)
       presentController.setModalPresentationStyle_(style)
-      self.rootViewController.presentViewController_animated_completion_(
+
+      keyWindowViewController.presentViewController_animated_completion_(
         presentController,
         True,
         None,
       )
-      #_keep_alive.append(presentController)
 
     # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    present_viewController(
-      self.viewController,
-      self.modalPresentationStyle,
-    )
-    #self._main_loop()
-
-  def _main_loop(self) -> None:
+    _main_thread_present()
+    print('s: --- main_loop ---')
     # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    get_loop()
-    '''
-    try:
-      loop.run_forever()
-    except Exception as e:
-      print(e)
-    #loop.close()
-    '''
+    loop.run_forever()
+    print('e: --- main_loop ---')
 
 
 if __name__ == '__main__':
   print('--- run ---')
   main_vc = MainViewController.new()
   presentation_style = 1
-  app = App(main_vc, presentation_style)
-  app.present()
+
+  app = Application.alloc().initWithViewController_(main_vc)
+  app.presentWithStyle_(presentation_style)
   print('--- end ---')
+
   # >>> (6) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  try:
+    import gc
+    gc.collect()
+  except Exception as e:
+    print('--- collect: error')
+    print(f'{e}')
 
