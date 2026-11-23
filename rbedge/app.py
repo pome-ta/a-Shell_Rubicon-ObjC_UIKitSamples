@@ -30,7 +30,8 @@ class App(NSObject):
   @objc_method
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
-    print(f'- {NSStringFromClass(__class__)}: dealloc')
+    #print(f'- {NSStringFromClass(__class__)}: dealloc')
+    pass
 
   @objc_method
   def configureWithViewController_navigationClass_(
@@ -71,10 +72,9 @@ class App(NSObject):
 
   @objc_method
   def presentWithStyle_(self, style: int) -> None:
-    # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
     @onMainThread
     def _main_thread_present() -> None:
-      # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       sharedApplication = UIApplication.sharedApplication
       objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
       windowScene = next(_scene
@@ -92,10 +92,8 @@ class App(NSObject):
         None,
       )
 
-    # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     _main_thread_present()
-    print('s: --- main_loop ---')
-    # >>> (4) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    #print('s: --- main_loop ---')
     loop.run_forever()
-    print('e: --- main_loop ---')
 

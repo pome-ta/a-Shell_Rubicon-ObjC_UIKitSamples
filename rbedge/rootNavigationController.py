@@ -17,8 +17,8 @@ class RootNavigationController(UINavigationController):
   @objc_method
   def dealloc(self) -> None:
     # xxx: 呼ばない-> `send_super(__class__, self, 'dealloc')`
-    print(f'- {NSStringFromClass(__class__)}: dealloc')
-    print('--- loop stop Call ---')
+    #print(f'- {NSStringFromClass(__class__)}: dealloc')
+    #print('--- loop stop Call ---')
     # >>> (5) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     loop.call_soon(loop.stop)
 
@@ -30,7 +30,7 @@ class RootNavigationController(UINavigationController):
       'loadView',
       restype=None,
     )
-    print(f'{NSStringFromClass(__class__)}: loadView')
+    #print(f'{NSStringFromClass(__class__)}: loadView')
 
   @objc_method
   def viewDidLoad(self) -> None:
@@ -40,7 +40,7 @@ class RootNavigationController(UINavigationController):
       'viewDidLoad',
       restype=None,
     )
-    print(f'{NSStringFromClass(__class__)}: viewDidLoad')
+    #print(f'{NSStringFromClass(__class__)}: viewDidLoad')
     self.delegate = self
 
   @objc_method
@@ -55,7 +55,7 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    print(f'{NSStringFromClass(__class__)}: viewWillAppear_')
+    #print(f'{NSStringFromClass(__class__)}: viewWillAppear_')
 
   @objc_method
   def viewDidAppear_(self, animated: bool) -> None:
@@ -69,12 +69,12 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    print(f'{NSStringFromClass(__class__)}: viewDidAppear_')
-    print('↓ ---')
+    #print(f'{NSStringFromClass(__class__)}: viewDidAppear_')
+    #print('↓ ---')
 
   @objc_method
   def viewWillDisappear_(self, animated: bool) -> None:
-    print('↑ ---')
+    #print('↑ ---')
     send_super(
       __class__,
       self,
@@ -85,7 +85,7 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    print(f'{NSStringFromClass(__class__)}: viewWillDisappear_')
+    #print(f'{NSStringFromClass(__class__)}: viewWillDisappear_')
 
   @objc_method
   def viewDidDisappear_(self, animated: bool) -> None:
@@ -99,11 +99,11 @@ class RootNavigationController(UINavigationController):
         ctypes.c_bool,
       ],
     )
-    print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
+    #print(f'{NSStringFromClass(__class__)}: viewDidDisappear_')
 
   @objc_method
   def closeButtonTapped_(self, sender) -> None:
-    print(f'{NSStringFromClass(__class__)}: doneButtonTapped:')
+    #print(f'{NSStringFromClass(__class__)}: doneButtonTapped:')
     self.dismissViewControllerAnimated_completion_(True, None)
 
   @objc_method

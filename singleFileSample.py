@@ -365,7 +365,7 @@ class MainViewController(UIViewController):
 UIApplication = ObjCClass('UIApplication')
 
 
-class Application(NSObject):
+class App(NSObject):
 
   viewController = objc_property(ObjCInstance)
   navigationClass = objc_property(ObjCClass)
@@ -448,7 +448,7 @@ if __name__ == '__main__':
   main_vc = MainViewController.new()
   presentation_style = 1
 
-  app = Application.alloc().initWithViewController_(main_vc)
+  app = App.alloc().initWithViewController_(main_vc)
   app.presentWithStyle_(presentation_style)
   print('--- end ---')
 

@@ -1,9 +1,13 @@
 from pathlib import Path
 import plistlib
 
-from pyrubicon.objc.api import ObjCClass
-from pyrubicon.objc.api import objc_method, objc_property
-from pyrubicon.objc.runtime import send_super
+from pyrubicon.objc import (
+  ObjCClass,
+  ObjCInstance,
+  objc_method,
+  objc_property,
+)  # api
+from pyrubicon.objc import send_super  # runtime
 
 from rbedge.enumerations import UITableViewStyle
 from rbedge.functions import NSStringFromClass
@@ -14,11 +18,10 @@ UITableView = ObjCClass('UITableView')
 UITableViewCell = ObjCClass('UITableViewCell')
 UIImage = ObjCClass('UIImage')
 
-NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
 UIColor = ObjCClass('UIColor')
 
 
-def get_order_list():
+def get_order_list() -> list:
   CoreGlyphs_path = '/System/Library/CoreServices/CoreGlyphs.bundle/'
 
   symbol_order_path = 'symbol_order.plist'
@@ -30,64 +33,81 @@ def get_order_list():
 
 class SFSymbolsViewController(UIViewController):
 
-  cell_identifier: str = objc_property()
-  all_items: list = objc_property()
+  cellIdentifier: str = objc_property()
+  allItems: list = objc_property()
 
   @objc_method
-  def loadView(self):
-    send_super(__class__, self, 'loadView')
-    self.cell_identifier = 'customCell'
-    self.all_items = get_order_list()
+  def loadView(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'loadView',
+      restype=None,
+    )
+
+    self.cellIdentifier = 'customCell'
+    self.allItems = get_order_list()
 
   @objc_method
-  def viewDidLoad(self):
-    send_super(__class__, self, 'viewDidLoad')
+  def viewDidLoad(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'viewDidLoad',
+      restype=None,
+    )
 
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
-    self.view.backgroundColor = UIColor.systemBackgroundColor()
+
+    self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
 
     # --- Table
-    sf_tableView = UITableView.alloc().initWithFrame_style_(
-      self.view.bounds, UITableViewStyle.plain)
-    sf_tableView.registerClass_forCellReuseIdentifier_(UITableViewCell,
-                                                       self.cell_identifier)
-    sf_tableView.dataSource = self
-    sf_tableView.delegate = self
+    sfTableView = UITableView.alloc().initWithFrame_style_(
+      self.view.bounds,
+      UITableViewStyle.plain,
+    )
+    sfTableView.registerClass_forCellReuseIdentifier_(
+      UITableViewCell,
+      self.cellIdentifier,
+    )
+    sfTableView.dataSource = self
+    sfTableView.delegate = self
 
-    # --- Layout
-    self.view.addSubview_(sf_tableView)
-    sf_tableView.translatesAutoresizingMaskIntoConstraints = False
-    areaLayoutGuide = self.view.safeAreaLayoutGuide
-
-    NSLayoutConstraint.activateConstraints_([
-      sf_tableView.centerXAnchor.constraintEqualToAnchor_(
-        areaLayoutGuide.centerXAnchor),
-      sf_tableView.centerYAnchor.constraintEqualToAnchor_(
-        areaLayoutGuide.centerYAnchor),
-      sf_tableView.widthAnchor.constraintEqualToAnchor_multiplier_(
-        areaLayoutGuide.widthAnchor, 1.0),
-      sf_tableView.heightAnchor.constraintEqualToAnchor_multiplier_(
-        areaLayoutGuide.heightAnchor, 1.0),
-    ])
+    self.addSubviewWithLayout_(sfTableView)
 
   @objc_method
-  def didReceiveMemoryWarning(self):
-    send_super(__class__, self, 'didReceiveMemoryWarning')
+  def didReceiveMemoryWarning(self) -> None:
+    send_super(
+      __class__,
+      self,
+      'didReceiveMemoryWarning',
+      restype=None,
+    )
     print(f'\t{NSStringFromClass(__class__)}: didReceiveMemoryWarning')
 
   # --- UITableViewDataSource
   @objc_method
-  def tableView_numberOfRowsInSection_(self, tableView, section: int) -> int:
-    return len(self.all_items)
+  def tableView_numberOfRowsInSection_(
+    self,
+    tableView: ObjCInstance,
+    section: int,
+  ) -> int:
+    return len(self.allItems)
 
   @objc_method
-  def tableView_cellForRowAtIndexPath_(self, tableView, indexPath):
+  def tableView_cellForRowAtIndexPath_(
+    self,
+    tableView: ObjCInstance,
+    indexPath: ObjCInstance,
+  ) -> ObjCInstance:
     cell = tableView.dequeueReusableCellWithIdentifier_forIndexPath_(
-      self.cell_identifier, indexPath)
+      self.cellIdentifier,
+      indexPath,
+    )
 
-    symbol_name = self.all_items[indexPath.row]
+    symbol_name = self.allItems[indexPath.row]
 
     content = cell.defaultContentConfiguration()
     content.text = symbol_name
@@ -99,11 +119,58 @@ class SFSymbolsViewController(UIViewController):
 
   # --- UITableViewDelegate
   @objc_method
-  def tableView_didSelectRowAtIndexPath_(self, tableView, indexPath):
+  def tableView_didSelectRowAtIndexPath_(
+    self,
+    tableView: ObjCInstance,
+    indexPath: ObjCInstance,
+  ) -> None:
     #tableView.deselectRowAtIndexPath_animated_(indexPath, True)
-    select_item = self.all_items[indexPath.row]
+    select_item = self.allItems[indexPath.row]
 
     print(f'select:\t{select_item}')
+
+  # --- layout
+  @objc_method
+  def addSubviewWithLayout_(self, subView: ObjCInstance) -> None:
+    NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
+
+    self.view.addSubview_(subView)
+    safeAreaLayoutGuide = self.view.safeAreaLayoutGuide
+    #safeAreaLayoutGuide = self.view
+
+    subView.translatesAutoresizingMaskIntoConstraints = False
+
+    centerXAnchor = subView.centerXAnchor.constraintEqualToAnchor_(
+      safeAreaLayoutGuide.centerXAnchor)
+
+    centerYAnchor = subView.centerYAnchor.constraintEqualToAnchor_(
+      safeAreaLayoutGuide.centerYAnchor)
+    '''
+    centerYAnchor = subView.centerYAnchor.constraintEqualToAnchor_(
+      self.view.centerYAnchor)
+    '''
+
+    widthAnchor = subView.widthAnchor.constraintEqualToAnchor_multiplier_(
+      safeAreaLayoutGuide.widthAnchor,
+      1.0,
+    )
+
+    heightAnchor = subView.heightAnchor.constraintEqualToAnchor_multiplier_(
+      safeAreaLayoutGuide.heightAnchor,
+      1.0,
+    )
+    '''
+    heightAnchor = subView.heightAnchor.constraintEqualToAnchor_multiplier_(
+      self.view.heightAnchor,
+      1.0,
+    )
+    '''
+    NSLayoutConstraint.activateConstraints_([
+      centerXAnchor,
+      centerYAnchor,
+      widthAnchor,
+      heightAnchor,
+    ])
 
 
 if __name__ == '__main__':
@@ -116,6 +183,13 @@ if __name__ == '__main__':
 
   presentation_style = UIModalPresentationStyle.fullScreen
 
-  app = App(main_vc, presentation_style)
-  app.present()
+  app = App.alloc().initWithViewController_(main_vc)
+  app.presentWithStyle_(presentation_style)
+
+  try:
+    import gc
+    gc.collect()
+  except Exception as e:
+    print('--- collect: error')
+    print(f'{e}')
 
