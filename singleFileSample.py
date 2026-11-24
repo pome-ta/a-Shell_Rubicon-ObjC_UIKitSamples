@@ -369,6 +369,7 @@ class App(NSObject):
 
   viewController = objc_property(ObjCInstance)
   navigationClass = objc_property(ObjCClass)
+  sceneWindow = objc_property(ObjCInstance)
 
   @objc_method
   def dealloc(self) -> None:
@@ -382,12 +383,29 @@ class App(NSObject):
     navigationClass: ObjCClass,
   ) -> ObjCInstance:
     self = ObjCInstance(
-      send_super(__class__, self, 'init', restype=objc_id, argtypes=[]))
+      send_super(
+        __class__,
+        self,
+        'init',
+        restype=objc_id,
+        argtypes=[],
+      ))
     if self is None:
       return None
 
     self.viewController = viewController
     self.navigationClass = navigationClass
+
+    # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    sharedApplication = UIApplication.sharedApplication
+    objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
+
+    next(sharedScene for _scene in iter(objectEnumerator.nextObject, None)
+         if (sharedScene := _scene).activationState == 0)
+
+    sceneWindow = sharedScene.keyWindow if (
+      _delegate := sharedScene.delegate) is None else _delegate.window
+    self.sceneWindow = sceneWindow
 
     return self
 
@@ -417,22 +435,37 @@ class App(NSObject):
     # >>> (2) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     @onMainThread
     def _main_thread_present() -> None:
+      '''
+      
       # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       sharedApplication = UIApplication.sharedApplication
       objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
 
-      next(windowScene for _scene in iter(objectEnumerator.nextObject, None)
-           if (windowScene := _scene).activationState == 0)
-      foregroundActiveViewController = windowScene.delegate.window.rootViewController
+      next(sharedScene for _scene in iter(objectEnumerator.nextObject, None)
+           if (sharedScene := _scene).activationState == 0)
+
+      sceneWindow = sharedScene.keyWindow if (
+        _delegate := sharedScene.delegate) is None else _delegate.window
+
+      pdbr.state(sceneWindow)
+      #pdbr.state(sharedScene.delegate.window)
+      #pdbr.state(sharedScene)
+      '''
 
       presentController = self.navigationClass.alloc(
       ).initWithRootViewController_(self.viewController)
-      presentController.setModalPresentationStyle_(2)
-
-      foregroundActiveViewController.presentViewController_animated_completion_(
+      presentController.setModalPresentationStyle_(style)
+      '''
+      sceneWindow.rootViewController.presentViewController_animated_completion_(
         presentController,
         True,
         None,
+      )
+      '''
+      self.sceneWindow.rootViewController.presentViewController(
+        presentController,
+        animated=True,
+        completion=None,
       )
 
     # >>> (3) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
