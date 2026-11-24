@@ -32,13 +32,13 @@ class RootNavigationController(UINavigationController):
     #navigationBarAppearance.configureWithOpaqueBackground()
     #navigationBarAppearance.configureWithTransparentBackground()
 
-    '''
+    
     navigationBar = self.navigationBar
     navigationBar.standardAppearance = navigationBarAppearance
     navigationBar.scrollEdgeAppearance = navigationBarAppearance
     navigationBar.compactAppearance = navigationBarAppearance
     navigationBar.compactScrollEdgeAppearance = navigationBarAppearance
-    '''
+    
     
 
   @objc_method
