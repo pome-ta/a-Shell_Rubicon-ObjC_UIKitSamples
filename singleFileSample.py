@@ -420,12 +420,9 @@ class App(NSObject):
       # >>> (1) <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
       sharedApplication = UIApplication.sharedApplication
       objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
-      # windowScene = next(_scene
-      #                    for _scene in iter(objectEnumerator.nextObject, None)
-      #                    if _scene.activationState == 0)
-      # keyWindowViewController = windowScene.keyWindow.rootViewController
-      # pdbr.state(keyWindowViewController)
-      next(windowScene for _scene in iter(objectEnumerator.nextObject, None) if (windowScene := _scene).activationState == 0)
+
+      next(windowScene for _scene in iter(objectEnumerator.nextObject, None)
+           if (windowScene := _scene).activationState == 0)
       foregroundActiveViewController = windowScene.delegate.window.rootViewController
 
       presentController = self.navigationClass.alloc(
@@ -462,11 +459,4 @@ if __name__ == '__main__':
   except Exception as e:
     print('--- collect: error')
     print(f'{e}')
-  # sharedApplication = UIApplication.sharedApplication
-  # objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
-  # # windowScene = next(_scene
-  # #                     for _scene in iter(objectEnumerator.nextObject, None)
-  # #                     if _scene.activationState == 0)
-  # next(windowScene for _scene in iter(objectEnumerator.nextObject, None) if (windowScene := _scene).activationState == 0)
-  # # keyWindowViewController = windowScene.keyWindow.rootViewController
-  # pdbr.state(windowScene.delegate.window.rootViewController)
+
