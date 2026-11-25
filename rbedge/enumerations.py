@@ -62,10 +62,10 @@ class UISceneActivationState:
   background = 2
 
 
-
 # ref: [UITableViewStyle | Apple Developer Documentation](https://developer.apple.com/documentation/uikit/uitableviewstyle?language=objc)
 class UITableViewStyle:
   # ref: [UITableView.rs - source](https://docs.rs/objc2-ui-kit/latest/src/objc2_ui_kit/generated/UITableView.rs.html#19)
   plain = 0
   grouped = 1
   insetGrouped = 2
+
