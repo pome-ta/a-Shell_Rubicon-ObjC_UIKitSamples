@@ -17,8 +17,9 @@ UIViewController = ObjCClass('UIViewController')
 UITableView = ObjCClass('UITableView')
 UITableViewCell = ObjCClass('UITableViewCell')
 UIImage = ObjCClass('UIImage')
-
 UIColor = ObjCClass('UIColor')
+
+NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
 
 
 def get_order_list() -> list:
@@ -60,7 +61,6 @@ class SFSymbolsViewController(UIViewController):
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
-
     self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
 
     # --- Table
@@ -72,6 +72,7 @@ class SFSymbolsViewController(UIViewController):
       UITableViewCell,
       self.cellIdentifier,
     )
+
     sfTableView.dataSource = self
     sfTableView.delegate = self
 
@@ -132,39 +133,24 @@ class SFSymbolsViewController(UIViewController):
   # --- layout
   @objc_method
   def addSubviewWithLayout_(self, subView: ObjCInstance) -> None:
-    NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
-
     self.view.addSubview_(subView)
-    safeAreaLayoutGuide = self.view.safeAreaLayoutGuide
-    #safeAreaLayoutGuide = self.view
-
     subView.translatesAutoresizingMaskIntoConstraints = False
+    safeAreaLayoutGuide = self.view.safeAreaLayoutGuide
 
     centerXAnchor = subView.centerXAnchor.constraintEqualToAnchor_(
       safeAreaLayoutGuide.centerXAnchor)
-
     centerYAnchor = subView.centerYAnchor.constraintEqualToAnchor_(
       safeAreaLayoutGuide.centerYAnchor)
-    '''
-    centerYAnchor = subView.centerYAnchor.constraintEqualToAnchor_(
-      self.view.centerYAnchor)
-    '''
 
     widthAnchor = subView.widthAnchor.constraintEqualToAnchor_multiplier_(
       safeAreaLayoutGuide.widthAnchor,
       1.0,
     )
-
     heightAnchor = subView.heightAnchor.constraintEqualToAnchor_multiplier_(
       safeAreaLayoutGuide.heightAnchor,
       1.0,
     )
-    '''
-    heightAnchor = subView.heightAnchor.constraintEqualToAnchor_multiplier_(
-      self.view.heightAnchor,
-      1.0,
-    )
-    '''
+
     NSLayoutConstraint.activateConstraints_([
       centerXAnchor,
       centerYAnchor,
