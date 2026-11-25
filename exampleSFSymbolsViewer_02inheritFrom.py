@@ -19,6 +19,7 @@ class SFSymbolsViewController(UIViewController):
     )
 
     # --- Navigation
+    # インスタンス生成後に`title` 指定があるかないかで分岐
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
 
@@ -38,6 +39,7 @@ if __name__ == '__main__':
   from rbedge.enumerations import UIModalPresentationStyle
 
   main_vc = SFSymbolsViewController.new()
+  # 今回は、インスタンス生成後に指定するパターンで
   _title = NSStringFromClass(SFSymbolsViewController)
   main_vc.navigationItem.title = _title
 
