@@ -17,6 +17,7 @@ class SFSymbolsViewController(UIViewController):
       'viewDidLoad',
       restype=None,
     )
+
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
