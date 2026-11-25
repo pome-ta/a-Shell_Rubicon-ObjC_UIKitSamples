@@ -116,14 +116,11 @@ class SFSymbolsViewController(UIViewController):
   def addSubviewWithLayout_(self, subView: ObjCInstance) -> None:
     self.view.addSubview_(subView)
     subView.translatesAutoresizingMaskIntoConstraints = False
-    # `safeAreaLayoutGuide` を基準に
     safeAreaLayoutGuide = self.view.safeAreaLayoutGuide
 
-    # X軸を中心
     centerXAnchor = subView.centerXAnchor.constraintEqualToAnchor_(
       safeAreaLayoutGuide.centerXAnchor)
 
-    # Y軸を中心
     centerYAnchor = subView.centerYAnchor.constraintEqualToAnchor_(
       safeAreaLayoutGuide.centerYAnchor)
 
