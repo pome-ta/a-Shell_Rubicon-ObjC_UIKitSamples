@@ -26,7 +26,7 @@ class SFSymbolsViewController(UIViewController):
       'viewDidLoad',
       restype=None,
     )
-    
+
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
@@ -54,6 +54,7 @@ class SFSymbolsViewController(UIViewController):
   @objc_method
   def addSubviewWithLayout_(self, subView: ObjCInstance) -> None:
     self.view.addSubview_(subView)
+    # `False` にする
     subView.translatesAutoresizingMaskIntoConstraints = False
     # `safeAreaLayoutGuide` を基準に
     safeAreaLayoutGuide = self.view.safeAreaLayoutGuide
