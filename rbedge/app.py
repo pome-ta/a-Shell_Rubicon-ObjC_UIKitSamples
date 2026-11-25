@@ -26,6 +26,7 @@ class App(NSObject):
 
   viewController = objc_property(ObjCInstance)
   navigationClass = objc_property(ObjCClass)
+  sharedViewController = objc_property(ObjCInstance)
 
   @objc_method
   def dealloc(self) -> None:
@@ -39,13 +40,28 @@ class App(NSObject):
     viewController: ObjCInstance,
     navigationClass: ObjCClass,
   ) -> ObjCInstance:
-    self = ObjCInstance(
-      send_super(__class__, self, 'init', restype=objc_id, argtypes=[]))
+    self = ObjCInstance(send_super(
+      __class__,
+      self,
+      'init',
+      restype=objc_id,
+    ))
     if self is None:
       return None
 
     self.viewController = viewController
     self.navigationClass = navigationClass
+
+    sharedApplication = UIApplication.sharedApplication
+    objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
+
+    next(sharedScene for _scene in iter(objectEnumerator.nextObject, None)
+         if (sharedScene := _scene).activationState == 0)
+
+    sceneWindow = sharedScene.keyWindow if (
+      _delegate := sharedScene.delegate) is None else _delegate.window
+
+    self.sharedViewController = sceneWindow.rootViewController
 
     return self
 
@@ -75,25 +91,18 @@ class App(NSObject):
 
     @onMainThread
     def _main_thread_present() -> None:
-      sharedApplication = UIApplication.sharedApplication
-      objectEnumerator = sharedApplication.connectedScenes.objectEnumerator()
-      windowScene = next(_scene
-                         for _scene in iter(objectEnumerator.nextObject, None)
-                         if _scene.activationState == 0)
-      keyWindowViewController = windowScene.keyWindow.rootViewController
 
       presentController = self.navigationClass.alloc(
       ).initWithRootViewController_(self.viewController)
       presentController.setModalPresentationStyle_(style)
 
-      keyWindowViewController.presentViewController_animated_completion_(
+      self.sharedViewController.presentViewController(
         presentController,
-        True,
-        None,
+        animated=True,
+        completion=None,
       )
 
     _main_thread_present()
-
     #print('s: --- main_loop ---')
     loop.run_forever()
 
