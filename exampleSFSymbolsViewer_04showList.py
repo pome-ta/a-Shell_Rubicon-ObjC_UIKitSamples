@@ -70,7 +70,6 @@ class SFSymbolsViewController(UIViewController):
     # UITableViewDataSource Protocol を紐付け
     sfTableView.dataSource = self
 
-    # sfTableView.backgroundColor = UIColor.systemCyanColor()
     try:
       _bg_color = UIColor.systemCyanColor()
     except TypeError as e:

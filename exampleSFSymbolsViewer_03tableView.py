@@ -36,7 +36,7 @@ class SFSymbolsViewController(UIViewController):
       self.view.bounds,
       UITableViewStyle.plain,
     )
-    # sfTableView.backgroundColor = UIColor.systemCyanColor()
+
     try:
       _bg_color = UIColor.systemCyanColor()
     except TypeError as e:

@@ -26,7 +26,8 @@ def get_order_list() -> list:
   CoreGlyphs_path = '/System/Library/CoreServices/CoreGlyphs.bundle/'
 
   symbol_order_name = 'symbol_order.plist'
-  symbol_order_bundle = next(Path(CoreGlyphs_path).rglob(symbol_order_name), None)
+  symbol_order_bundle = next(
+    Path(CoreGlyphs_path).rglob(symbol_order_name), None)
 
   order_list = plistlib.loads(symbol_order_bundle.read_bytes())
   return order_list
@@ -63,15 +64,14 @@ class SFSymbolsViewController(UIViewController):
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
 
-    # 背景色追加
     try:
       _bg_color = UIColor.systemDarkPinkColor()
     except TypeError as e:
       _bg_color = UIColor.systemDarkPinkColor
       print(_bg_color, e)
     finally:
+      # 背景色追加
       self.view.backgroundColor = _bg_color
-    # self.view.backgroundColor = UIColor.systemDarkPinkColor()
 
     # --- Table
     sfTableView = UITableView.alloc().initWithFrame_style_(
@@ -85,7 +85,6 @@ class SFSymbolsViewController(UIViewController):
 
     sfTableView.dataSource = self
 
-    # sfTableView.backgroundColor = UIColor.systemCyanColor()
     try:
       _bg_color = UIColor.systemCyanColor()
     except TypeError as e:
