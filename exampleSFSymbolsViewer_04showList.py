@@ -70,7 +70,14 @@ class SFSymbolsViewController(UIViewController):
     # UITableViewDataSource Protocol を紐付け
     sfTableView.dataSource = self
 
-    sfTableView.backgroundColor = UIColor.systemCyanColor()
+    # sfTableView.backgroundColor = UIColor.systemCyanColor()
+    try:
+      _bg_color = UIColor.systemCyanColor()
+    except TypeError as e:
+      _bg_color = UIColor.systemCyanColor
+      print(_bg_color, e)
+    finally:
+      sfTableView.backgroundColor = _bg_color
 
     self.addSubviewWithLayout_(sfTableView)
 

@@ -25,12 +25,11 @@ NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
 def get_order_list() -> list:
   CoreGlyphs_path = '/System/Library/CoreServices/CoreGlyphs.bundle/'
 
-  symbol_order_path = 'symbol_order.plist'
-  symbol_order_bundle = Path(CoreGlyphs_path, symbol_order_path)
+  symbol_order_name = 'symbol_order.plist'
+  symbol_order_bundle = next(Path(CoreGlyphs_path).rglob(symbol_order_name), None)
 
   order_list = plistlib.loads(symbol_order_bundle.read_bytes())
   return order_list
-
 
 class SFSymbolsViewController(UIViewController):
 
@@ -61,7 +60,14 @@ class SFSymbolsViewController(UIViewController):
     # --- Navigation
     self.navigationItem.title = NSStringFromClass(__class__) if (
       title := self.navigationItem.title) is None else title
-    self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
+    # self.view.backgroundColor = UIColor.secondarySystemBackgroundColor()
+    try:
+      _bg_color = UIColor.secondarySystemBackgroundColor()
+    except TypeError as e:
+      _bg_color = UIColor.secondarySystemBackgroundColor
+      print(_bg_color, e)
+    finally:
+      self.view.backgroundColor = _bg_color
 
     # --- Table
     sfTableView = UITableView.alloc().initWithFrame_style_(

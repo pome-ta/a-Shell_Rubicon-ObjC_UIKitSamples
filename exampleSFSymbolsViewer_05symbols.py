@@ -25,8 +25,8 @@ NSLayoutConstraint = ObjCClass('NSLayoutConstraint')
 def get_order_list() -> list:
   CoreGlyphs_path = '/System/Library/CoreServices/CoreGlyphs.bundle/'
 
-  symbol_order_path = 'symbol_order.plist'
-  symbol_order_bundle = Path(CoreGlyphs_path, symbol_order_path)
+  symbol_order_name = 'symbol_order.plist'
+  symbol_order_bundle = next(Path(CoreGlyphs_path).rglob(symbol_order_name), None)
 
   order_list = plistlib.loads(symbol_order_bundle.read_bytes())
   return order_list
@@ -64,7 +64,14 @@ class SFSymbolsViewController(UIViewController):
       title := self.navigationItem.title) is None else title
 
     # 背景色追加
-    self.view.backgroundColor = UIColor.systemDarkPinkColor()
+    try:
+      _bg_color = UIColor.systemDarkPinkColor()
+    except TypeError as e:
+      _bg_color = UIColor.systemDarkPinkColor
+      print(_bg_color, e)
+    finally:
+      self.view.backgroundColor = _bg_color
+    # self.view.backgroundColor = UIColor.systemDarkPinkColor()
 
     # --- Table
     sfTableView = UITableView.alloc().initWithFrame_style_(
@@ -78,7 +85,14 @@ class SFSymbolsViewController(UIViewController):
 
     sfTableView.dataSource = self
 
-    sfTableView.backgroundColor = UIColor.systemCyanColor()
+    # sfTableView.backgroundColor = UIColor.systemCyanColor()
+    try:
+      _bg_color = UIColor.systemCyanColor()
+    except TypeError as e:
+      _bg_color = UIColor.systemCyanColor
+      print(_bg_color, e)
+    finally:
+      sfTableView.backgroundColor = _bg_color
 
     self.addSubviewWithLayout_(sfTableView)
 
